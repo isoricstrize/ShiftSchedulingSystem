@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ShiftSchedulingSystem.Models;
 using ShiftSchedulingSystem.Enums;
+using ShiftSchedulingSystem.Rules;
 
 
 // ------------ WORKERS INIT ------------
@@ -45,15 +46,16 @@ var workers = new List<Worker>
         Id = 6,
         Name = "Luka",
         Seniority = SeniorityLevel.Mid,
-        Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 16), RequestType = RequestType.DayOff}]
+        Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 16), RequestType = RequestType.DayOff}],
+        IsActive = false
     }
 };
 
-foreach (var worker in workers)
+/*foreach (var worker in workers)
 {
     Console.WriteLine(
         $"{worker.Name} - {worker.Seniority}");
-}
+}*/
 
 
 
@@ -108,7 +110,7 @@ foreach (var day in schedule.Days)
 }
 
 
-foreach (var day in schedule.Days)
+/*foreach (var day in schedule.Days)
 {
     Console.WriteLine($"{day.Date} ({day.OccupancyPercentage}%)");
 
@@ -116,7 +118,7 @@ foreach (var day in schedule.Days)
     {
         Console.WriteLine($"  {shift.ShiftType}");
     }
-}
+}*/
 
 
 static int CalculateScore(
@@ -135,41 +137,6 @@ static int CalculateScore(
            ((int)worker.Seniority * occupancyFactor);
 }
 
-static bool HasMinimumRestHours(
-    Worker worker,
-    Shift candidateShift)
-{
-    const int MinRestHours = 12;
-
-    foreach (var existingShift in worker.AssignedShifts)
-    {
-        double hoursAfterExisting =
-            (candidateShift.StartTime - existingShift.EndTime)
-                .TotalHours;
-
-        double hoursBeforeExisting =
-            (existingShift.StartTime - candidateShift.EndTime)
-                .TotalHours;
-
-        bool enoughRest =
-            hoursAfterExisting >= MinRestHours
-            ||
-            hoursBeforeExisting >= MinRestHours;
-
-        Console.WriteLine($"Worker: {worker.Name}");
-        Console.WriteLine($"hoursAfterExisting: {hoursAfterExisting}");
-        Console.WriteLine($"hoursBeforeExisting: {hoursBeforeExisting}");
-        Console.WriteLine($"enoughRest: {enoughRest}");
-
-        if (!enoughRest)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 
 // ------------ GENERATOR ------------
 
@@ -177,34 +144,27 @@ var sortedDays = schedule.Days
     .OrderByDescending(d => d.OccupancyPercentage)
     .ToList();
 
+var rules = new List<ISchedulingRule>
+{
+    new OneShiftPerDayRule(),
+    new MinimumRestHoursRule(),
+    new WorkerRequestRule()
+};
+var ruleEngine = new RuleEngine(rules);
+
 foreach (var day in sortedDays)
 {
     Console.WriteLine($"\n=== {day.Date} ({day.OccupancyPercentage}%) ===");
 
-    // Build candidate pool
-    var validWorkers = workers
-        .Where(w => w.IsActive)
-        .ToList();
-
     foreach (var shift in day.Shifts)
     {
-        // Rule 1 - One shift per day
-        validWorkers.RemoveAll(worker =>
-            day.Shifts.Any(s => s.AssignedWorker?.Id == worker.Id));
-
-        // Rule 2 - Minimum rest hours
-        validWorkers.RemoveAll(worker =>
-        {
-            if (worker.AssignedShifts.Count == 0)
-                return false;
-
-            return HasMinimumRestHours(worker, shift);
-        });
-
-        // Rule 3 - Worker request
-        validWorkers.RemoveAll(worker =>
-            worker.Requests.Any(r => r.Date == day.Date));
-
+        var validWorkers = workers
+            .Where(w => w.IsActive)
+            .Where(w => ruleEngine.IsValid(
+                w,
+                shift,
+                day))
+            .ToList();
 
         if (!validWorkers.Any())
         {
@@ -212,6 +172,12 @@ foreach (var day in sortedDays)
                 $"No valid worker for {shift.ShiftType}");
 
             continue;
+        }
+
+        foreach (var worker in validWorkers)
+        {
+            Console.WriteLine(
+                $"VALID WORKERS: {worker.Name} - {worker.Seniority}");
         }
 
 
