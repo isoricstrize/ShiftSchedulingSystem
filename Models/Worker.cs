@@ -8,7 +8,7 @@ namespace ShiftSchedulingSystem.Models
 {
     public class Worker
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public required string Name { get; set; }
 
         public SeniorityLevel Seniority { get; set; }
