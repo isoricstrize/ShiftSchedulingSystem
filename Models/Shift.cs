@@ -13,6 +13,8 @@ namespace ShiftSchedulingSystem.Models
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
 
+        public int WorkLoad { get; set; }
+
         public Worker? AssignedWorker { get; set; } // todo: list of workers
     }
 }

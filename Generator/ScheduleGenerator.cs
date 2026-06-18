@@ -21,59 +21,60 @@ namespace ShiftSchedulingSystem.Generator
 
         public void Generate(List<Worker> workers, Schedule schedule)
         {
-            // Days with higher occupancy percantage are priority
-            var sortedDays = schedule.Days
-                .OrderByDescending(d => d.OccupancyPercentage)
-                .ToList();
+            var allShifts = schedule.Days
+                .SelectMany(d => d.Shifts)
+                .OrderByDescending(s => s.WorkLoad);
 
-            foreach (var day in sortedDays)
+            foreach (var shift in allShifts)
             {
+                var day = schedule.Days
+                    .First(d => d.Shifts.Contains(shift));
+
                 Console.WriteLine($"\n=== {day.Date} ({day.OccupancyPercentage}%) ===");
 
-                foreach (var shift in day.Shifts)
+                var sortedShifts = day.Shifts
+                    .OrderByDescending(s => s.WorkLoad);
+
+                var validWorkers = workers
+                    .Where(w => w.IsActive)
+                    .Where(w => _ruleEngine.IsValid(w, shift, day))
+                    .ToList();
+
+                // Skip the current shift if there is no valid worker. Go to the next shift.
+                if (!validWorkers.Any())
                 {
-                    var validWorkers = workers
-                        .Where(w => w.IsActive)
-                        .Where(w => _ruleEngine.IsValid(w, shift, day))
-                        .ToList();
-
-                    // Skip the current shift if there is no valid worker. Go to the next shift.
-                    if (!validWorkers.Any())
-                    {
-                        Console.WriteLine($"No valid worker for {shift.ShiftType}");
-                        continue;
-                    }
-
-                    foreach (var worker in validWorkers)
-                    {
-                        Console.WriteLine($"VALID WORKERS: {worker.Name} - {worker.Seniority}");
-                    }
-
-                    var selectedWorker = SelectBestWorker(validWorkers, day);
-
-                    // Assign worker
-                    shift.AssignedWorker = selectedWorker;
-                    // Update worker state
-                    selectedWorker.AssignedHours += 8;
-                    selectedWorker.AssignedShifts.Add(shift);
-
-                    Console.WriteLine($"==> {shift.ShiftType} -> {selectedWorker.Name}");
-
+                    Console.WriteLine($"No valid worker for {shift.ShiftType}");
+                    continue;
                 }
+
+                foreach (var worker in validWorkers)
+                {
+                    Console.WriteLine($"VALID WORKERS: {worker.Name} - {worker.Seniority}");
+                }
+
+                var selectedWorker = SelectBestWorker(validWorkers, shift);
+
+                // Assign worker
+                shift.AssignedWorker = selectedWorker;
+                // Update worker state
+                selectedWorker.AssignedHours += 8;
+                selectedWorker.AssignedShifts.Add(shift);
+
+                Console.WriteLine($"==> {shift.ShiftType} -> {selectedWorker.Name}");
             }
         }
 
 
-        private Worker SelectBestWorker(List<Worker> validWorkers, DaySchedule day)
+        private Worker SelectBestWorker(List<Worker> validWorkers, Shift shift)
         {
             Worker? selectedWorker = null;
             int bestScore = int.MinValue;
 
             foreach (var worker in validWorkers)
             {
-                int score = CalculateScore(worker, day);
+                int score = CalculateScore(worker, shift);
 
-                Console.WriteLine($"{worker.Name} - Score: {score}");
+                Console.WriteLine($"{worker.Name} - Score: {score} (workload: {shift.WorkLoad})");
 
                 if (score > bestScore)
                 {
@@ -86,13 +87,13 @@ namespace ShiftSchedulingSystem.Generator
         }
 
 
-        private int CalculateScore(Worker worker, DaySchedule day)
+        private int CalculateScore(Worker worker, Shift shift)
         {
             int remainingHours = MaxWeeklyHours - worker.AssignedHours;
 
-            int occupancyFactor = day.OccupancyPercentage / 10;
-
-            return remainingHours + ((int)worker.Seniority * occupancyFactor);
+            // Worker seniority is weighted by shift workload, 
+            // so it matters more on busy shifts and less on quiet shifts.
+            return remainingHours + ((int)worker.Seniority * shift.WorkLoad);
         }
 
     }

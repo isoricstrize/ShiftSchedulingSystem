@@ -29,10 +29,10 @@ namespace ShiftSchedulingSystem.Rules
                     ||
                     hoursBeforeExisting >= MinRestHours;
 
-                Console.WriteLine($"Worker: {worker.Name}");
+                /*Console.WriteLine($"Worker: {worker.Name}");
                 Console.WriteLine($"hoursAfterExisting: {hoursAfterExisting}");
                 Console.WriteLine($"hoursBeforeExisting: {hoursBeforeExisting}");
-                Console.WriteLine($"enoughRest: {enoughRest}");
+                Console.WriteLine($"enoughRest: {enoughRest}");*/
 
                 if (!enoughRest) return false;
             }

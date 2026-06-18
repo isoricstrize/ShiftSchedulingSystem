@@ -9,7 +9,7 @@ namespace ShiftSchedulingSystem.SeedData
 {
     public static class ScheduleSeed
     {
-        public static Schedule Create(DateOnly startDate, List<int> occupancies)
+        public static Schedule Create(DateOnly startDate, List<int> occupancies, List<(int Morning, int Afternoon, int Night)> workloads)
         {
             var days = new List<DaySchedule>();
 
@@ -21,7 +21,7 @@ namespace ShiftSchedulingSystem.SeedData
                 {
                     Date = date,
                     OccupancyPercentage = occupancies[i],
-                    Shifts = CreateShifts(date)
+                    Shifts = CreateShifts(date, workloads[i])
                 });
             }
 
@@ -31,7 +31,7 @@ namespace ShiftSchedulingSystem.SeedData
             };
         }
 
-        private static List<Shift> CreateShifts(DateOnly date)
+        private static List<Shift> CreateShifts(DateOnly date, (int Morning, int Afternoon, int Night) workload)
         {
             return
             [
@@ -39,14 +39,16 @@ namespace ShiftSchedulingSystem.SeedData
                 {
                     ShiftType = ShiftType.Morning,
                     StartTime = date.ToDateTime(new TimeOnly(6, 0)),
-                    EndTime = date.ToDateTime(new TimeOnly(14, 0))
+                    EndTime = date.ToDateTime(new TimeOnly(14, 0)),
+                    WorkLoad = workload.Morning
                 },
 
                 new Shift
                 {
                     ShiftType = ShiftType.Afternoon,
                     StartTime = date.ToDateTime(new TimeOnly(14, 0)),
-                    EndTime = date.ToDateTime(new TimeOnly(22, 0))
+                    EndTime = date.ToDateTime(new TimeOnly(22, 0)),
+                    WorkLoad = workload.Afternoon
                 },
 
                 new Shift
@@ -54,7 +56,8 @@ namespace ShiftSchedulingSystem.SeedData
                     ShiftType = ShiftType.Night,
                     StartTime = date.ToDateTime(new TimeOnly(22, 0)),
                     EndTime = date.ToDateTime(new TimeOnly(6, 0))
-                        .AddDays(1)
+                        .AddDays(1),
+                    WorkLoad = workload.Night
                 }
             ];
         }

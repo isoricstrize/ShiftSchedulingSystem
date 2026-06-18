@@ -17,20 +17,20 @@ namespace ShiftSchedulingSystem.SeedData
                 {
                     Name = "Ana",
                     Seniority = SeniorityLevel.Senior,
-                    Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 19), RequestType = RequestType.DayOff}]
+                    //Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 19), RequestType = RequestType.DayOff}]
                 },
                 new Worker
                 {
                     Name = "Lorena",
                     Seniority = SeniorityLevel.Mid,
-                    Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 19), RequestType = RequestType.DayOff}]
+                    //Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 19), RequestType = RequestType.DayOff}]
 
                 },
                 new Worker
                 {
                     Name = "Andrej",
                     Seniority = SeniorityLevel.Junior,
-                    Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 17), RequestType = RequestType.DayOff}]
+                    //Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 17), RequestType = RequestType.DayOff}]
                 },
                 new Worker
                 {
@@ -46,8 +46,8 @@ namespace ShiftSchedulingSystem.SeedData
                 {
                     Name = "Luka",
                     Seniority = SeniorityLevel.Mid,
-                    Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 16), RequestType = RequestType.DayOff}],
-                    IsActive = false
+                    //Requests = [new WorkerRequest{Date = new DateOnly(2026, 6, 16), RequestType = RequestType.DayOff}],
+                    IsActive = true
                 }
             };
         }
