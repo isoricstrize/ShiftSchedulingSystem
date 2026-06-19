@@ -28,8 +28,9 @@ var schedule = ScheduleSeed.Create(startDate, occupancies, shiftWorkloads);
 var rules = new List<ISchedulingRule>
 {
     new OneShiftPerDayRule(),
+    new WorkerRequestRule(),
     new MinimumRestHoursRule(),
-    new WorkerRequestRule()
+    new ConsecutiveNightShiftsRule()
 };
 var ruleEngine = new RuleEngine(rules);
 

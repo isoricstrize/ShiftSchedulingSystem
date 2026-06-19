@@ -87,14 +87,43 @@ namespace ShiftSchedulingSystem.Generator
         }
 
 
+        private int GetConsecutiveNightShifts(Worker worker)
+        {
+            var ordered = worker.AssignedShifts
+                .OrderByDescending(s => s.StartTime)
+                .ToList();
+
+            int count = 0;
+
+            foreach (var shift in ordered)
+            {
+                if (shift.ShiftType == ShiftType.Night)
+                {
+                    count++;
+                }
+                else
+                {
+                    break; // streak is broken
+                }
+            }
+
+            return count;
+        }
+
+
         private int CalculateScore(Worker worker, Shift shift)
         {
             int remainingHours = MaxWeeklyHours - worker.AssignedHours;
 
+            // Small penalty to reduce preference for workers who already worked night shifts 
+            // (encourages rotation of night shifts across the team)
+            int nightShiftPenalty = worker.AssignedShifts.Count(s => s.ShiftType == ShiftType.Night);
+
             // Worker seniority is weighted by shift workload, 
             // so it matters more on busy shifts and less on quiet shifts.
-            return remainingHours + ((int)worker.Seniority * shift.WorkLoad);
+            return remainingHours + ((int)worker.Seniority * shift.WorkLoad) - (nightShiftPenalty * 5);
         }
+
 
     }
 }
