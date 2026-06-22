@@ -4,6 +4,7 @@ namespace ShiftSchedulingSystem.Enums
     {
         Morning,
         Afternoon,
-        Night
+        Night,
+        Support
     }
 }

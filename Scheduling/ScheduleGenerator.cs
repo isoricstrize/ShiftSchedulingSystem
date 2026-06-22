@@ -6,17 +6,17 @@ using ShiftSchedulingSystem.Enums;
 using ShiftSchedulingSystem.Models;
 using ShiftSchedulingSystem.Rules;
 
-namespace ShiftSchedulingSystem.Generator
+namespace ShiftSchedulingSystem.Scheduling
 {
     public class ScheduleGenerator
     {
-        private const int MaxWeeklyHours = 40;
-
         private readonly RuleEngine _ruleEngine;
+        private readonly SchedulingSettings _settings;
 
-        public ScheduleGenerator(RuleEngine ruleEngine)
+        public ScheduleGenerator(RuleEngine ruleEngine, SchedulingSettings settings)
         {
             _ruleEngine = ruleEngine;
+            _settings = settings;
         }
 
         public void Generate(List<Worker> workers, Schedule schedule)
@@ -57,7 +57,7 @@ namespace ShiftSchedulingSystem.Generator
                 // Assign worker
                 shift.AssignedWorker = selectedWorker;
                 // Update worker state
-                selectedWorker.AssignedHours += 8;
+                selectedWorker.AssignedHours += _settings.ShiftDurationHours;
                 selectedWorker.AssignedShifts.Add(shift);
 
                 Console.WriteLine($"==> {shift.ShiftType} -> {selectedWorker.Name}");
@@ -86,34 +86,9 @@ namespace ShiftSchedulingSystem.Generator
             return selectedWorker!;
         }
 
-
-        private int GetConsecutiveNightShifts(Worker worker)
-        {
-            var ordered = worker.AssignedShifts
-                .OrderByDescending(s => s.StartTime)
-                .ToList();
-
-            int count = 0;
-
-            foreach (var shift in ordered)
-            {
-                if (shift.ShiftType == ShiftType.Night)
-                {
-                    count++;
-                }
-                else
-                {
-                    break; // streak is broken
-                }
-            }
-
-            return count;
-        }
-
-
         private int CalculateScore(Worker worker, Shift shift)
         {
-            int remainingHours = MaxWeeklyHours - worker.AssignedHours;
+            int remainingHours = _settings.MaxWeeklyHours - worker.AssignedHours;
 
             // Small penalty to reduce preference for workers who already worked night shifts 
             // (encourages rotation of night shifts across the team)

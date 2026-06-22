@@ -3,7 +3,7 @@ using ShiftSchedulingSystem.Models;
 using ShiftSchedulingSystem.Enums;
 using ShiftSchedulingSystem.Rules;
 using ShiftSchedulingSystem.SeedData;
-using ShiftSchedulingSystem.Generator;
+using ShiftSchedulingSystem.Scheduling;
 
 
 var workers = WorkerSeed.CreateWorkers();
@@ -25,17 +25,29 @@ var shiftWorkloads = new List<(int Morning, int Afternoon, int Night)>
 };
 var schedule = ScheduleSeed.Create(startDate, occupancies, shiftWorkloads);
 
-var rules = new List<ISchedulingRule>
+var schedulingSettings = new SchedulingSettings();
+
+var generatorRules = new List<ISchedulingRule>
 {
     new OneShiftPerDayRule(),
     new WorkerRequestRule(),
     new MinimumRestHoursRule(),
     new ConsecutiveNightShiftsRule()
 };
-var ruleEngine = new RuleEngine(rules);
-
-var generator = new ScheduleGenerator(ruleEngine);
+var generatorRuleEngine = new RuleEngine(generatorRules);
+var generator = new ScheduleGenerator(generatorRuleEngine, schedulingSettings);
 generator.Generate(workers, schedule);
+
+
+var optimizerRules = new List<ISchedulingRule>
+{
+    new OneShiftPerDayRule(),
+    new WorkerRequestRule(),
+    new MinimumRestHoursRule(),
+};
+var optimizerRuleEngine = new RuleEngine(optimizerRules);
+var optimizer = new ScheduleOptimizer(optimizerRuleEngine, schedulingSettings);
+optimizer.Optimize(workers, schedule);
 
 
 
